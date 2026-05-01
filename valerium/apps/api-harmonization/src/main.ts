@@ -1,0 +1,95 @@
+import { LogLevel } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as telemetry from '@o2s/telemetry';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import process from 'node:process';
+
+import { LoggerService } from '@o2s/utils.logger';
+
+import { HeaderName } from '@o2s/framework/headers';
+
+import { AppConfig } from './app.config';
+import { AppModule } from './app.module';
+
+const H = HeaderName;
+
+async function bootstrap() {
+    const logLevel = (process.env.LOG_LEVEL === 'info' ? 'log' : process.env.LOG_LEVEL) as LogLevel;
+    const logLevels = [logLevel];
+    if (logLevel === 'debug') {
+        logLevels.push('verbose');
+    }
+
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+        logger: logLevels,
+    });
+
+    if (process.env.API_PREFIX) {
+        app.setGlobalPrefix(process.env.API_PREFIX);
+    }
+
+    const origins = process.env.FRONT_BASE_URLS!.split(',');
+
+    app.enableCors({
+        origin: [...origins],
+        preflightContinue: false,
+        credentials: true,
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'Cookie',
+            'Cache-Control',
+            'Pragma',
+            'Expires',
+            H.Locale,
+            H.Currency,
+            H.ClientTimezone,
+        ],
+        methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    });
+
+    app.use(helmet());
+    app.use(cookieParser());
+    app.use(compression());
+    app.set('query parser', 'extended');
+
+    const swaggerConfig = new DocumentBuilder()
+        .setTitle('Open Self Service REST API')
+        .setDescription(
+            'Complete REST API reference for the Open Self Service harmonization layer. This API provides a unified interface to interact with various backend systems including CMS, ticketing, notifications, billing, e-commerce, and more. All endpoints return normalized data models regardless of the underlying integration.',
+        )
+        .setVersion('1.0.0')
+        .addBearerAuth()
+        .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs-api', app, swaggerDocument, {
+        jsonDocumentUrl: 'docs-api-json',
+        yamlDocumentUrl: 'docs-api-yaml',
+        useGlobalPrefix: Boolean(process.env.API_PREFIX),
+    });
+
+    app.enableShutdownHooks();
+
+    app.useLogger(app.get(LoggerService));
+
+    telemetry.sendEvent('o2s', 'api-harmonization', 'bootstrap');
+    telemetry.sendEvent(
+        'o2s',
+        'api-harmonization',
+        'integrations',
+        Object.entries(AppConfig.integrations).reduce((prev, [module, integration]) => {
+            return {
+                ...prev,
+                [module]: integration.name,
+            };
+        }, {}),
+    );
+
+    await app.listen(process.env.PORT as string);
+}
+
+bootstrap();

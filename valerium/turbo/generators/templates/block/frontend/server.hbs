@@ -1,0 +1,32 @@
+import dynamic from 'next/dynamic';
+import React from 'react';
+import { HeaderName } from '@o2s/framework/headers';
+
+import type { Model } from '../api-harmonization/{{ kebabCase name }}.client';
+import { sdk } from '../sdk';
+
+import { {{ pascalCase name }}Props } from './{{ pascalCase name }}.types';
+
+const H = HeaderName;
+
+export const {{ pascalCase name }}Dynamic = dynamic(() =>
+    import('./{{ pascalCase name }}.client').then((module) => module.{{ pascalCase name }}Pure),
+);
+
+export const {{ pascalCase name }}: React.FC<{{ pascalCase name }}Props> = async ({ id, accessToken, locale, routing }) => {
+    let data: Model.{{ pascalCase name }}Block;
+    try {
+        data = await sdk.blocks.get{{ pascalCase name }}(
+            {
+                id,
+            },
+            { [H.Locale]: locale },
+            accessToken,
+        );
+    } catch (error) {
+        console.error('Error fetching {{ pascalCase name }} block', error);
+        return null;
+    }
+
+    return <{{ pascalCase name }}Dynamic {...data} id={id} accessToken={accessToken} locale={locale} routing={routing} />;
+};

@@ -1,0 +1,46 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CMS, Organizations } from '@o2s/configs.integrations';
+import { Observable, forkJoin, map } from 'rxjs';
+
+import { AppHeaders, HeaderName } from '@o2s/framework/headers';
+
+import { mapCustomerList } from './organizations.mapper';
+import { CustomerList } from './organizations.model';
+import { GetCustomersQuery } from './organizations.request';
+
+const H = HeaderName;
+
+@Injectable()
+export class OrganizationsService {
+    constructor(
+        private readonly cmsService: CMS.Service,
+        private readonly organizationsService: Organizations.Service,
+    ) {}
+
+    getCustomers(query: GetCustomersQuery, headers: AppHeaders): Observable<CustomerList> {
+        const cms = this.cmsService.getBlockConfig<CMS.Model.OrganizationList.OrganizationList>({
+            id: 'organizations',
+            locale: headers[H.Locale],
+            blockType: 'OrganizationList',
+        });
+        // Pass authorization token to filter organizations by current user
+        const organizations = this.organizationsService.getOrganizationList(
+            {
+                ...query,
+                limit: query.limit || 1000,
+                offset: query.offset || 0,
+            },
+            headers[H.Authorization],
+        );
+
+        return forkJoin({ organizations, cms }).pipe(
+            map(({ organizations, cms }) => {
+                if (!organizations) {
+                    throw new NotFoundException();
+                }
+
+                return mapCustomerList(organizations, cms, headers[H.Locale]);
+            }),
+        );
+    }
+}

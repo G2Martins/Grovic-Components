@@ -1,0 +1,29 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended"],
+    "enabledManagers": ["npm"],
+    "ignorePaths": ["**/dist/**", "**/build/**", "**/.next/**", "**/generated/**"],
+    "lockFileMaintenance": {
+        "enabled": true,
+        "schedule": ["after 11pm on sunday"]
+    },
+    "vulnerabilityAlerts": {
+        "enabled": true
+    },
+    "osvVulnerabilityAlerts": false,
+    "packageRules": [
+        {
+            "matchDepTypes": [
+                "dependencies",
+                "devDependencies"
+            ],
+            "rangeStrategy": "bump"
+        },
+        {
+            "matchDepTypes": [
+                "peerDependencies"
+            ],
+            "rangeStrategy": "widen"
+        }
+    ]
+}

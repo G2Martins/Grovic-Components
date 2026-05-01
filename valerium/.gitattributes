@@ -1,0 +1,20 @@
+## Puppet
+* text=auto
+* text eol=lf
+
+# Fonts
+*.ttf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+
+# Graphics
+*.svg             text
+*.jpg             binary
+*.jpeg            binary
+*.png             binary
+*.gif             binary
+*.webp            binary
+
+# Videos
+*.mp4             binary

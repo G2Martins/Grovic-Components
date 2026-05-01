@@ -1,0 +1,13 @@
+import React from 'react';
+
+import { cn } from '@o2s/ui/lib/utils';
+
+import { {{ pascalCase name }}Props } from './{{ pascalCase name }}.types';
+
+export const {{ pascalCase name }}: React.FC<Readonly<{{ pascalCase name }}Props>> = ({ className, ...props }) => {
+    return (
+        <div className={cn('', className)} {...props}>
+            {{ pascalCase name }}
+        </div>
+    );
+};

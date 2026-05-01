@@ -1,0 +1,50 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "stream",
+    "concurrency": "5",
+    "globalEnv": ["CART_ID_LOCAL_STORAGE_KEY"],
+    "globalPassThroughEnv": [
+        "AUTH_JWT_SECRET",
+        "NODE_ENV",
+        "MOCKED_INTEGRATION_DELAYS_ENABLED",
+        "O2S_OPENAPI_URL",
+        "O2S_OPENAPI_STRICT",
+        "O2S_OPENAPI_SERVER_URL",
+        "NEXT_PUBLIC_API_URL_INTERNAL"
+    ],
+    "tasks": {
+        "dev": {
+            "cache": false,
+            "outputLogs": "full",
+            "persistent": true,
+            "inputs": ["$TURBO_DEFAULT$", ".env*"]
+        },
+        "build": {
+            "cache": true,
+            "outputLogs": "new-only",
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".env*"],
+            "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"]
+        },
+        "lint": {
+            "cache": true,
+            "outputLogs": "new-only",
+            "dependsOn": ["^lint"]
+        },
+        "test": {
+            "cache": true,
+            "outputLogs": "new-only",
+            "dependsOn": ["^test"]
+        },
+        "format": {
+            "cache": true,
+            "outputLogs": "new-only",
+            "dependsOn": ["^format"]
+        },
+        "start": {
+            "cache": false,
+            "outputLogs": "full",
+            "persistent": true
+        }
+    }
+}
